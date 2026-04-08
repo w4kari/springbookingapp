@@ -19,16 +19,35 @@ public class BookingService {
 
     public List<Booking> getAllBookings() {
         return entityManager.createQuery(
-                "select b from Booking b order by b.id", Booking.class
+                "select b from Booking b join fetch b.room r join fetch r.hotel order by b.id", Booking.class
         ).getResultList();
     }
 
+    public List<Booking> getBookingsByGuestEmail(String email) {
+        if (isBlank(email)) {
+            throw new BadRequestException("Email гостя обязателен");
+        }
+
+        return entityManager.createQuery(
+                        "select b from Booking b join fetch b.room r join fetch r.hotel " +
+                                "where lower(b.guestEmail) = lower(:email) order by b.id",
+                        Booking.class
+                )
+                .setParameter("email", email.trim())
+                .getResultList();
+    }
+
     public Booking getBookingById(Long id) {
-        Booking booking = entityManager.find(Booking.class, id);
-        if (booking == null) {
+        List<Booking> bookings = entityManager.createQuery(
+                        "select b from Booking b join fetch b.room r join fetch r.hotel where b.id = :id",
+                        Booking.class
+                )
+                .setParameter("id", id)
+                .getResultList();
+        if (bookings.isEmpty()) {
             throw new BookingNotFoundException("Бронирование с id " + id + " не найдено");
         }
-        return booking;
+        return bookings.get(0);
     }
 
     public Booking createBooking(Booking booking) {
@@ -36,6 +55,7 @@ public class BookingService {
 
         Room room = findRoom(booking.getHotelName(), booking.getRoomNumber());
         validateRoomAvailability(room);
+        validateRoomCapacity(room, booking.getGuestsCount());
         ensureRoomIsFree(room, booking.getCheckInDate(), booking.getCheckOutDate(), null);
 
         long nights = ChronoUnit.DAYS.between(booking.getCheckInDate(), booking.getCheckOutDate());
@@ -44,6 +64,9 @@ public class BookingService {
         booking.setRoom(room);
         booking.setHotelName(room.getHotel().getName());
         booking.setRoomNumber(room.getNumber());
+        booking.setGuestName(booking.getGuestName().trim());
+        booking.setGuestEmail(booking.getGuestEmail().trim().toLowerCase());
+        booking.setStatus(Booking.BookingStatus.ACTIVE);
         booking.setTotalPrice(totalPrice);
 
         entityManager.persist(booking);
@@ -52,10 +75,15 @@ public class BookingService {
 
     public Booking updateBooking(Long id, Booking updatedBooking) {
         Booking existingBooking = getBookingById(id);
+        if (existingBooking.getStatus() == Booking.BookingStatus.CANCELLED) {
+            throw new ConflictException("Нельзя изменять отмененное бронирование");
+        }
+
         validateBookingInput(updatedBooking);
 
         Room room = findRoom(updatedBooking.getHotelName(), updatedBooking.getRoomNumber());
         validateRoomAvailability(room);
+        validateRoomCapacity(room, updatedBooking.getGuestsCount());
         ensureRoomIsFree(room, updatedBooking.getCheckInDate(), updatedBooking.getCheckOutDate(), id);
 
         long nights = ChronoUnit.DAYS.between(updatedBooking.getCheckInDate(), updatedBooking.getCheckOutDate());
@@ -67,15 +95,22 @@ public class BookingService {
         existingBooking.setRoomNumber(room.getNumber());
         existingBooking.setCheckInDate(updatedBooking.getCheckInDate());
         existingBooking.setCheckOutDate(updatedBooking.getCheckOutDate());
+        existingBooking.setGuestsCount(updatedBooking.getGuestsCount());
         existingBooking.setRoom(room);
+        existingBooking.setStatus(Booking.BookingStatus.ACTIVE);
         existingBooking.setTotalPrice(totalPrice);
 
         return entityManager.merge(existingBooking);
     }
 
-    public void deleteBooking(Long id) {
+    public Booking cancelBooking(Long id) {
         Booking booking = getBookingById(id);
-        entityManager.remove(booking);
+        booking.setStatus(Booking.BookingStatus.CANCELLED);
+        return entityManager.merge(booking);
+    }
+
+    public void deleteBooking(Long id) {
+        cancelBooking(id);
     }
 
     private void validateBookingInput(Booking booking) {
@@ -100,6 +135,12 @@ public class BookingService {
         if (booking.getCheckOutDate() == null) {
             throw new BadRequestException("Дата выезда обязательна");
         }
+        if (booking.getGuestsCount() == null || booking.getGuestsCount() <= 0) {
+            throw new BadRequestException("Количество гостей должно быть больше 0");
+        }
+        if (booking.getCheckInDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Нельзя создать бронирование в прошлом");
+        }
         if (!booking.getCheckOutDate().isAfter(booking.getCheckInDate())) {
             throw new BadRequestException("Дата выезда должна быть позже даты заезда");
         }
@@ -107,9 +148,9 @@ public class BookingService {
 
     private Room findRoom(String hotelName, String roomNumber) {
         List<Room> rooms = entityManager.createQuery(
-                "select r from Room r join fetch r.hotel h where lower(h.name) = lower(:hotelName) and r.number = :roomNumber",
-                Room.class
-        )
+                        "select r from Room r join fetch r.hotel h where lower(h.name) = lower(:hotelName) and r.number = :roomNumber",
+                        Room.class
+                )
                 .setParameter("hotelName", hotelName.trim())
                 .setParameter("roomNumber", roomNumber.trim())
                 .getResultList();
@@ -132,14 +173,25 @@ public class BookingService {
         }
     }
 
+    private void validateRoomCapacity(Room room, Integer guestsCount) {
+        if (room.getCapacity() == null || room.getCapacity() <= 0) {
+            throw new BadRequestException("Для комнаты не указана корректная вместимость");
+        }
+        if (guestsCount > room.getCapacity()) {
+            throw new ConflictException("Количество гостей превышает вместимость комнаты");
+        }
+    }
+
     private void ensureRoomIsFree(Room room, LocalDate checkInDate, LocalDate checkOutDate, Long bookingIdToExclude) {
         Long count = entityManager.createQuery(
-                "select count(b.id) from Booking b where b.room.id = :roomId " +
-                        "and (:bookingIdToExclude is null or b.id <> :bookingIdToExclude) " +
-                        "and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate",
-                Long.class
-        )
+                        "select count(b.id) from Booking b where b.room.id = :roomId " +
+                                "and b.status = :activeStatus " +
+                                "and (:bookingIdToExclude is null or b.id <> :bookingIdToExclude) " +
+                                "and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate",
+                        Long.class
+                )
                 .setParameter("roomId", room.getId())
+                .setParameter("activeStatus", Booking.BookingStatus.ACTIVE)
                 .setParameter("bookingIdToExclude", bookingIdToExclude)
                 .setParameter("checkInDate", checkInDate)
                 .setParameter("checkOutDate", checkOutDate)
@@ -152,29 +204,5 @@ public class BookingService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
-    }
-}
-
-class BookingNotFoundException extends RuntimeException {
-    public BookingNotFoundException(String message) {
-        super(message);
-    }
-}
-
-class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
-        super(message);
-    }
-}
-
-class BadRequestException extends RuntimeException {
-    public BadRequestException(String message) {
-        super(message);
-    }
-}
-
-class ConflictException extends RuntimeException {
-    public ConflictException(String message) {
-        super(message);
     }
 }

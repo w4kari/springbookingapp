@@ -1,6 +1,13 @@
 package bookingapp.spring;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -8,33 +15,54 @@ import java.time.LocalDate;
 @Table(name = "bookings")
 public class Booking {
 
+    public enum BookingStatus { ACTIVE, CANCELLED }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
 
-    @Column(nullable = false),
+    @Column(nullable = false)
+    @NotBlank(message = "Имя гостя обязательно")
     private String guestName;
 
     @Column(nullable = false)
+    @NotBlank(message = "Email гостя обязателен")
+    @Email(message = "Некорректный формат email")
     private String guestEmail;
 
     @Column(nullable = false)
+    @NotBlank(message = "Название отеля обязательно")
     private String hotelName;
 
     @Column(nullable = false)
+    @NotBlank(message = "Номер комнаты обязателен")
     private String roomNumber;
 
     @Column(nullable = false)
+    @NotNull(message = "Дата заезда обязательна")
     private LocalDate checkInDate;
 
     @Column(nullable = false)
+    @NotNull(message = "Дата выезда обязательна")
     private LocalDate checkOutDate;
 
+    @Column(nullable = false)
+    @NotNull(message = "Количество гостей обязательно")
+    @Positive(message = "Количество гостей должно быть больше 0")
+    private Integer guestsCount = 1;
+
     @Column(nullable = false, precision = 12, scale = 2)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private BigDecimal totalPrice;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BookingStatus status = BookingStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id", nullable = false)
+    @JsonIgnore
     private Room room;
 
     public Booking() {
@@ -96,6 +124,14 @@ public class Booking {
         this.checkOutDate = checkOutDate;
     }
 
+    public Integer getGuestsCount() {
+        return guestsCount;
+    }
+
+    public void setGuestsCount(Integer guestsCount) {
+        this.guestsCount = guestsCount;
+    }
+
     public BigDecimal getTotalPrice() {
         return totalPrice;
     }
@@ -110,5 +146,13 @@ public class Booking {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public BookingStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(BookingStatus status) {
+        this.status = status;
     }
 }
