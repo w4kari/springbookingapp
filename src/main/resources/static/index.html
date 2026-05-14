@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBook</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-shell">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div>
+                <div class="brand">Hotel<span>Book</span></div>
+
+                <nav class="nav-menu">
+                    <button class="nav-item active" data-section="dashboard">
+                        <span class="nav-icon">⌂</span>
+                        <span>Главная</span>
+                    </button>
+
+                    <button class="nav-item" data-section="hotels">
+                        <span class="nav-icon">◫</span>
+                        <span>Отели</span>
+                    </button>
+
+                    <button class="nav-item" data-section="rooms">
+                        <span class="nav-icon">⌘</span>
+                        <span>Номера</span>
+                    </button>
+
+                    <button class="nav-item" data-section="bookings">
+                        <span class="nav-icon">☑</span>
+                        <span>Бронирования</span>
+                    </button>
+
+                    <button class="nav-item" data-section="create-booking">
+                        <span class="nav-icon">＋</span>
+                        <span>Создать</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar">A</div>
+                <div>
+                    <div class="user-role">Администратор</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h1 id="pageTitle">Главная</h1>
+                    <p class="subtitle">Управление бронированием</p>
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn">Обновить</button>
+            </header>
+
+            <section class="section active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">◫</div>
+                            <div class="stat-title">Отели</div>
+                        </div>
+                        <div class="stat-value" id="hotelsCount">0</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">⌘</div>
+                            <div class="stat-title">Номера</div>
+                        </div>
+                        <div class="stat-value" id="roomsCount">0</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">☑</div>
+                            <div class="stat-title">Бронирования</div>
+                        </div>
+                        <div class="stat-value" id="bookingsCount">0</div>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Последние бронирования</h2>
+                    </div>
+                    <div id="recentBookings" class="booking-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="hotels">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Отели</h2>
+                    </div>
+                    <div id="hotelsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="rooms">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Номера</h2>
+                    </div>
+                    <div id="roomsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="bookings">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Бронирования</h2>
+                    </div>
+                    <div id="bookingsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="create-booking">
+                <div class="content-block form-block">
+                    <div class="block-header">
+                        <h2>Создать бронирование</h2>
+                    </div>
+
+                    <form id="bookingForm" class="modern-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="guestName">Имя гостя</label>
+                                <input type="text" id="guestName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="guestEmail">Email</label>
+                                <input type="email" id="guestEmail" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="roomNumber">Номер комнаты</label>
+                                <input type="text" id="roomNumber" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="hotelName">Название отеля</label>
+                                <input type="text" id="hotelName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="guestsCount">Количество гостей</label>
+                                <input type="number" id="guestsCount" min="1" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="checkInDate">Дата заезда</label>
+                                <input type="date" id="checkInDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="checkOutDate">Дата выезда</label>
+                                <input type="date" id="checkOutDate" required>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn">Создать бронирование</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <div id="messageBox" class="message-box hidden"></div>
+        </main>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
