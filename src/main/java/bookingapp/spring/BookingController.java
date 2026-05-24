@@ -27,6 +27,11 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getBookingsByGuestEmail(email));
     }
 
+    @GetMapping("/by-guest-id")
+    public ResponseEntity<List<Booking>> getBookingsByGuestId(@RequestParam Long guestId) {
+        return ResponseEntity.ok(bookingService.getBookingsByGuestId(guestId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getBookingById(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.getBookingById(id));

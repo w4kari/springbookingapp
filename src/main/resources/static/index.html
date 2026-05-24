@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HotelBook</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page-shell">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div>
+                <div class="brand">Hotel<span>Book</span></div>
+
+                <nav class="nav-menu">
+                    <button class="nav-item active" data-section="dashboard">
+                        <span class="nav-icon">H</span>
+                        <span>Dashboard</span>
+                    </button>
+
+                    <button class="nav-item" data-section="hotels">
+                        <span class="nav-icon">HT</span>
+                        <span>Hotels</span>
+                    </button>
+
+                    <button class="nav-item" data-section="rooms">
+                        <span class="nav-icon">RM</span>
+                        <span>Rooms</span>
+                    </button>
+
+                    <button class="nav-item" data-section="guests">
+                        <span class="nav-icon">@</span>
+                        <span>Guests</span>
+                    </button>
+
+                    <button class="nav-item" data-section="bookings">
+                        <span class="nav-icon">BK</span>
+                        <span>Bookings</span>
+                    </button>
+
+                    <button class="nav-item" data-section="create-booking">
+                        <span class="nav-icon">+</span>
+                        <span>Create Booking</span>
+                    </button>
+                </nav>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="user-avatar">A</div>
+                <div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <p class="subtitle">Booking management</p>
+                </div>
+
+                <button class="refresh-btn" id="refreshBtn">Refresh</button>
+            </header>
+
+            <section class="section active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">HT</div>
+                            <div class="stat-title">Hotels</div>
+                        </div>
+                        <div class="stat-value" id="hotelsCount">0</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">RM</div>
+                            <div class="stat-title">Rooms</div>
+                        </div>
+                        <div class="stat-value" id="roomsCount">0</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-top">
+                            <div class="stat-icon">BK</div>
+                            <div class="stat-title">Bookings</div>
+                        </div>
+                        <div class="stat-value" id="bookingsCount">0</div>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Recent bookings</h2>
+                    </div>
+                    <div id="recentBookings" class="booking-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="hotels">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Hotels</h2>
+                    </div>
+
+                    <div class="tool-grid">
+                        <form id="hotelFilterForm" class="tool-panel">
+                            <h3>Filter by city</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="hotelCityFilter">City</label>
+                                    <input type="text" id="hotelCityFilter" placeholder="Chisinau">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Filter hotels</button>
+                                <button type="button" class="secondary-btn" id="resetHotelFilterBtn">Reset</button>
+                            </div>
+                        </form>
+
+                        <form id="hotelForm" class="tool-panel">
+                            <h3>Add hotel</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="hotelCreateName">Name</label>
+                                    <input type="text" id="hotelCreateName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotelCreateCity">City</label>
+                                    <input type="text" id="hotelCreateCity" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotelCreateAddress">Address</label>
+                                    <input type="text" id="hotelCreateAddress">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotelCreateStars">Stars</label>
+                                    <input type="number" id="hotelCreateStars" min="1" max="5">
+                                </div>
+                                <div class="form-group form-wide">
+                                    <label for="hotelCreateDescription">Description</label>
+                                    <input type="text" id="hotelCreateDescription">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Add hotel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="hotelsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="rooms">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Rooms</h2>
+                    </div>
+
+                    <div class="tool-grid">
+                        <form id="roomFilterForm" class="tool-panel">
+                            <h3>Filter by price</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="roomMinPrice">Min price</label>
+                                    <input type="number" id="roomMinPrice" step="0.01" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomMaxPrice">Max price</label>
+                                    <input type="number" id="roomMaxPrice" step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Filter rooms</button>
+                                <button type="button" class="secondary-btn" id="resetRoomFilterBtn">Reset</button>
+                            </div>
+                        </form>
+
+                        <form id="roomForm" class="tool-panel">
+                            <h3>Add room</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="roomCreateHotelId">Hotel ID</label>
+                                    <input type="number" id="roomCreateHotelId" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomCreateNumber">Room number</label>
+                                    <input type="text" id="roomCreateNumber" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomCreateType">Type</label>
+                                    <select id="roomCreateType" required>
+                                        <option value="SINGLE">SINGLE</option>
+                                        <option value="DOUBLE">DOUBLE</option>
+                                        <option value="SUITE">SUITE</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomCreateCapacity">Capacity</label>
+                                    <input type="number" id="roomCreateCapacity" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomCreatePrice">Price per night</label>
+                                    <input type="number" id="roomCreatePrice" step="0.01" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="roomCreateStatus">Status</label>
+                                    <select id="roomCreateStatus" required>
+                                        <option value="AVAILABLE">AVAILABLE</option>
+                                        <option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Add room</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="roomsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="guests">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Guests</h2>
+                    </div>
+
+                    <form id="guestForm" class="tool-panel form-block">
+                        <h3>Add guest</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="guestCreateFirstName">First name</label>
+                                <input type="text" id="guestCreateFirstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="guestCreateLastName">Last name</label>
+                                <input type="text" id="guestCreateLastName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="guestCreateEmail">Email</label>
+                                <input type="email" id="guestCreateEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="guestCreatePhone">Phone</label>
+                                <input type="text" id="guestCreatePhone">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn small-btn">Add guest</button>
+                        </div>
+                    </form>
+
+                    <div id="guestsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="bookings">
+                <div class="content-block">
+                    <div class="block-header">
+                        <h2>Bookings</h2>
+                    </div>
+
+                    <div class="tool-grid">
+                        <form id="bookingSearchForm" class="tool-panel">
+                            <h3>Search bookings</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="bookingSearchId">Booking ID</label>
+                                    <input type="number" id="bookingSearchId" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bookingSearchGuestId">Guest ID</label>
+                                    <input type="number" id="bookingSearchGuestId" min="1">
+                                </div>
+                                <div class="form-group form-wide">
+                                    <label for="bookingSearchEmail">Guest email</label>
+                                    <input type="email" id="bookingSearchEmail">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Search</button>
+                                <button type="button" class="secondary-btn" id="resetBookingSearchBtn">Reset</button>
+                            </div>
+                        </form>
+
+                        <form id="bookingUpdateForm" class="tool-panel">
+                            <h3>Update booking</h3>
+                            <div class="form-grid compact-grid">
+                                <div class="form-group">
+                                    <label for="updateBookingId">Booking ID</label>
+                                    <input type="number" id="updateBookingId" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateGuestName">Guest name</label>
+                                    <input type="text" id="updateGuestName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateGuestEmail">Guest email</label>
+                                    <input type="email" id="updateGuestEmail" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateHotelName">Hotel name</label>
+                                    <input type="text" id="updateHotelName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateRoomNumber">Room number</label>
+                                    <input type="text" id="updateRoomNumber" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateGuestsCount">Guests count</label>
+                                    <input type="number" id="updateGuestsCount" min="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateCheckInDate">Check-in date</label>
+                                    <input type="date" id="updateCheckInDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="updateCheckOutDate">Check-out date</label>
+                                    <input type="date" id="updateCheckOutDate" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="submit-btn small-btn">Update booking</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="bookingsList" class="cards-grid"></div>
+                </div>
+            </section>
+
+            <section class="section" id="create-booking">
+                <div class="content-block form-block">
+                    <div class="block-header">
+                        <h2>Create booking</h2>
+                    </div>
+
+                    <form id="bookingForm" class="modern-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="guestName">Guest name</label>
+                                <input type="text" id="guestName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="guestEmail">Email</label>
+                                <input type="email" id="guestEmail" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="roomNumber">Room number</label>
+                                <input type="text" id="roomNumber" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="hotelName">Hotel name</label>
+                                <input type="text" id="hotelName" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="guestsCount">Guests count</label>
+                                <input type="number" id="guestsCount" min="1" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="checkInDate">Check-in date</label>
+                                <input type="date" id="checkInDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="checkOutDate">Check-out date</label>
+                                <input type="date" id="checkOutDate" required>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn">Create booking</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <div id="messageBox" class="message-box hidden"></div>
+        </main>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
