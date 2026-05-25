@@ -10,10 +10,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional
 public class BookingService {
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -146,13 +148,31 @@ public class BookingService {
     }
 
     public Booking cancelBooking(Long id) {
+        return updateBookingStatus(id, Booking.BookingStatus.CANCELLED);
+    }
+
+    public Booking updateBookingStatus(Long id, Booking.BookingStatus status) {
+        if (status == null) {
+            throw new BadRequestException("Booking status is required");
+        }
+
         Booking booking = getBookingById(id);
-        booking.setStatus(Booking.BookingStatus.CANCELLED);
-        return entityManager.merge(booking);
+
+        if (status == Booking.BookingStatus.ACTIVE) {
+            validateRoomAvailability(booking.getRoom());
+            validateRoomCapacity(booking.getRoom(), booking.getGuestsCount());
+            ensureRoomIsFree(booking.getRoom(), booking.getCheckInDate(), booking.getCheckOutDate(), id);
+        } else if (status == Booking.BookingStatus.OUT_OF_SERVICE) {
+            ensureRoomIsFree(booking.getRoom(), booking.getCheckInDate(), booking.getCheckOutDate(), id);
+        }
+
+        booking.setStatus(status);
+        return booking;
     }
 
     public void deleteBooking(Long id) {
-        cancelBooking(id);
+        Booking booking = getBookingById(id);
+        entityManager.remove(booking);
     }
 
     private void validateBookingInput(Booking booking) {
@@ -164,6 +184,9 @@ public class BookingService {
         }
         if (isBlank(booking.getGuestEmail())) {
             throw new BadRequestException("Guest email is required");
+        }
+        if (!EMAIL_PATTERN.matcher(booking.getGuestEmail().trim()).matches()) {
+            throw new BadRequestException("Guest email must be valid");
         }
         if (isBlank(booking.getHotelName())) {
             throw new BadRequestException("Hotel name is required");
@@ -273,13 +296,13 @@ public class BookingService {
     private void ensureRoomIsFree(Room room, LocalDate checkInDate, LocalDate checkOutDate, Long bookingIdToExclude) {
         Long count = entityManager.createQuery(
                         "select count(b.id) from Booking b where b.room.id = :roomId " +
-                                "and b.status = :activeStatus " +
+                                "and b.status <> :cancelledStatus " +
                                 "and (:bookingIdToExclude is null or b.id <> :bookingIdToExclude) " +
                                 "and b.checkInDate < :checkOutDate and b.checkOutDate > :checkInDate",
                         Long.class
                 )
                 .setParameter("roomId", room.getId())
-                .setParameter("activeStatus", Booking.BookingStatus.ACTIVE)
+                .setParameter("cancelledStatus", Booking.BookingStatus.CANCELLED)
                 .setParameter("bookingIdToExclude", bookingIdToExclude)
                 .setParameter("checkInDate", checkInDate)
                 .setParameter("checkOutDate", checkOutDate)

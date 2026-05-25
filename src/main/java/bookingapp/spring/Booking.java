@@ -14,7 +14,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -26,7 +25,7 @@ import java.time.LocalDate;
 @Table(name = "bookings")
 public class Booking {
 
-    public enum BookingStatus { ACTIVE, CANCELLED }
+    public enum BookingStatus { ACTIVE, CANCELLED, OUT_OF_SERVICE }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,8 +37,6 @@ public class Booking {
     private String guestName;
 
     @Transient
-    @NotBlank(message = "Guest email is required")
-    @Email(message = "Guest email must be valid")
     private String guestEmail;
 
     @Column(name = "hotel_name", nullable = false)

@@ -12,6 +12,8 @@ const state = {
     bookings: []
 };
 
+const BOOKING_STATUSES = ["ACTIVE", "CANCELLED", "OUT_OF_SERVICE"];
+
 document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
     initRefresh();
@@ -174,6 +176,7 @@ function initBookingTools() {
     const resetButton = document.getElementById("resetBookingSearchBtn");
     const updateForm = document.getElementById("bookingUpdateForm");
     const bookingsList = document.getElementById("bookingsList");
+    const recentBookingsList = document.getElementById("recentBookings");
 
     searchForm?.addEventListener("submit", async event => {
         event.preventDefault();
@@ -229,7 +232,7 @@ function initBookingTools() {
         }
     });
 
-    bookingsList?.addEventListener("click", async event => {
+    const handleBookingActionClick = async event => {
         const button = event.target.closest("[data-booking-action]");
         if (!button) {
             return;
@@ -243,9 +246,29 @@ function initBookingTools() {
             return;
         }
 
+        if (action === "status") {
+            const card = button.closest(".card");
+            const status = card?.querySelector("[data-booking-status]")?.value;
+
+            try {
+                await apiRequest(`${API.bookings}/${id}/status`, {
+                    method: "PATCH",
+                    body: { status }
+                });
+                showMessage("Booking status updated", "success");
+                await loadBookings();
+                renderStats();
+                renderBookings();
+                renderRecentBookings();
+            } catch (error) {
+                showMessage(error.message, "error");
+            }
+            return;
+        }
+
         if (action === "cancel") {
             try {
-                await apiRequest(`${API.bookings}/${id}`, { method: "DELETE" });
+                await apiRequest(`${API.bookings}/${id}/cancel`, { method: "PATCH" });
                 showMessage("Booking cancelled", "success");
                 await loadBookings();
                 renderStats();
@@ -254,8 +277,26 @@ function initBookingTools() {
             } catch (error) {
                 showMessage(error.message, "error");
             }
+            return;
         }
-    });
+
+        if (action === "delete") {
+            try {
+                await apiRequest(`${API.bookings}/${id}`, { method: "DELETE" });
+                showMessage("Booking deleted", "success");
+                await loadBookings();
+                renderStats();
+                renderBookings();
+                renderRecentBookings();
+            } catch (error) {
+                showMessage(error.message, "error");
+            }
+            return;
+        }
+    };
+
+    bookingsList?.addEventListener("click", handleBookingActionClick);
+    recentBookingsList?.addEventListener("click", handleBookingActionClick);
 }
 
 async function loadAllData() {
@@ -428,10 +469,17 @@ function renderBookings() {
             <p><strong>Check-in:</strong> ${escapeHtml(booking.checkInDate || "-")}</p>
             <p><strong>Check-out:</strong> ${escapeHtml(booking.checkOutDate || "-")}</p>
             <p><strong>Total:</strong> ${escapeHtml(booking.totalPrice || "-")}</p>
-            <p><strong>Status:</strong> ${escapeHtml(booking.status || "-")}</p>
+            <label class="status-control">
+                <span>Status</span>
+                <select data-booking-status="${booking.id}">
+                    ${bookingStatusOptions(booking.status)}
+                </select>
+            </label>
             <div class="card-actions">
                 <button type="button" class="secondary-btn" data-booking-action="edit" data-booking-id="${booking.id}">Edit</button>
-                <button type="button" class="danger-btn" data-booking-action="cancel" data-booking-id="${booking.id}">Cancel</button>
+                <button type="button" class="secondary-btn" data-booking-action="status" data-booking-id="${booking.id}">Save status</button>
+                <button type="button" class="secondary-btn" data-booking-action="cancel" data-booking-id="${booking.id}">Cancel</button>
+                <button type="button" class="danger-btn" data-booking-action="delete" data-booking-id="${booking.id}">Delete</button>
             </div>
         `;
         container.appendChild(card);
@@ -472,6 +520,10 @@ function renderRecentBookings() {
             <p>Room: ${roomLabel}</p>
             <div style="margin-top: 14px;">
                 <span class="status-badge">${status}</span>
+            </div>
+            <div class="card-actions">
+                <button type="button" class="secondary-btn" data-booking-action="cancel" data-booking-id="${booking.id}">Cancel</button>
+                <button type="button" class="danger-btn" data-booking-action="delete" data-booking-id="${booking.id}">Delete</button>
             </div>
         `;
 
@@ -580,6 +632,13 @@ function updateBookingPayload() {
         checkInDate: getValue("updateCheckInDate"),
         checkOutDate: getValue("updateCheckOutDate")
     };
+}
+
+function bookingStatusOptions(currentStatus) {
+    return BOOKING_STATUSES.map(status => {
+        const selected = status === currentStatus ? " selected" : "";
+        return `<option value="${status}"${selected}>${status}</option>`;
+    }).join("");
 }
 
 async function apiRequest(url, options = {}) {

@@ -22,3 +22,4 @@ bookingapp\spring\Hotel.class
 bookingapp\spring\Booking.class
 bookingapp\spring\ApiError.class
 bookingapp\spring\Booking$BookingStatus.class
+bookingapp\spring\BookingController$BookingStatusUpdateRequest.class
